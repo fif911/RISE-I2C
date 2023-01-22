@@ -24,7 +24,12 @@
 
 String state = ESTABLISH_CONNECTION;
 byte byteArray[5] = {0x12, 0x34, 0x56, 0x78, 0x35}; // 
-int intArray[5] = {0, 123, 1245, 9001, 1}; //
+int intArray[5] = {0, 123, 1245, 9001, 1}; // it is hard to send int array as lib supports only bytes. 
+// Idea: always send 1 control byte of type, and then the values. In such way we can send arrays of ints
+// TODO: There should be some ready solutions for communications but I could nt find something meaningful
+// https://github.com/madsci1016/Arduino-EasyTransfer
+// https://tasnemulhasannehal.wixsite.com/diary/post/sending-float-data-i2c-bus
+// https://tasnemulhasannehal.wixsite.com/diary/post/sending-receiving-float-data-i2c-bus
 
 // int len(byte array){}
 

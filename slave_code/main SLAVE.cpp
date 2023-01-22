@@ -1,48 +1,59 @@
-/*
-  I2C Slave Demo
-  i2c-slave-demo.ino
-  Demonstrate use of I2C bus
-  Slave receives character from Master and responds
-  DroneBot Workshop 2019
-  https://dronebotworkshop.com
-*/
-
-// Include Arduino Wire library for I2C
-#include "Arduino.h"
-#include <Wire.h>
-
-// Define Slave I2C Address
-#define SLAVE_ADDR 9
-
-// Define Slave answer size
-#define ANSWERSIZE 5
-
-// Define string with response to Master
-String answer = "Hello";
+#include "I2CTransfer.h"
 
 
-void receiveEvent(int byteCount) {
-    // byte x;
-    
-    Serial.print("Receive event. Byte count: ");
-    Serial.println(byteCount);
+I2CTransfer myTransfer;
 
-    // Read while data received
-    while (0 < Wire.available()) {
-        byte x = Wire.read();
-        Serial.print("Value read: ");
-        Serial.println(x);
+#define SLAVE_ID 9
 
+struct __attribute__((packed)) communication_object {
+  char sender[3];
+  char reciever[3];
+  char sing;
+  float amount;
+  int16_t neg_v;
+  int32_t ints_array[3];
+};
+
+struct communication_object testStruct;
+
+template<typename T, size_t n>
+void print_array(T const(& arr)[n])
+{
+    /// Function to print array of any type
+    Serial.print("[");
+    for (size_t i = 0; i < n; i++) {
+        Serial.print(arr[i]);
+        Serial.print(" ");
     }
-    
-    // Print to Serial Monitor
-    // Serial.print("Receive event. Value read: ");
-    
-    // Serial.print("; Byte count: ");
-    
+    Serial.println("]");
 }
 
+/////////////////////////////////////////////////////////////////// Callbacks
+void hi()
+{
+  myTransfer.rxObj(testStruct);
+  Serial.println("Slave | recieve object: ");
+  Serial.print("sender:");
+  Serial.println(testStruct.sender);
+  Serial.print("reciever:");
+  Serial.println(testStruct.reciever);
+  Serial.println(testStruct.sing);
+  Serial.println(testStruct.amount);
+  print_array(testStruct.ints_array);
+  Serial.println(testStruct.neg_v);
+  Serial.println("---------");
+  // myTransfer.sendDatum("Response from Slave 9");
+}
+
+// supplied as a reference - persistent allocation required
+const functionPtr callbackArr[] = { hi };
+///////////////////////////////////////////////////////////////////
+
 void requestEvent() {
+  // IT WORKS !!!!
+  int ANSWERSIZE = 10;
+  String answer = "Hello12345";
+
 
   // Setup byte variable in the correct size
   byte response[ANSWERSIZE];
@@ -56,30 +67,26 @@ void requestEvent() {
   Wire.write(response,sizeof(response));
   
   // Print to Serial Monitor
-  Serial.println("Request event");
+  Serial.println("Slave | Send respose on Master's request");
 }
 
-
-void setup() {
-
-  // Initialize I2C communications as Slave
-  Wire.begin(SLAVE_ADDR);
-  
-  // Function to run when data requested from master
-  Wire.onRequest(requestEvent); 
-  
-  // Function to run when data received from master
-  Wire.onReceive(receiveEvent);
-  
-  // Setup Serial Monitor 
+void setup()
+{
   Serial.begin(9600);
-  Serial.println("I2C Slave Demonstration");
+  Wire.begin(SLAVE_ID); // Set slave address
+  Wire.onRequest(requestEvent); 
+  ///////////////////////////////////////////////////////////////// Config Parameters
+  configST myConfig;
+  myConfig.debug        = false;
+  myConfig.callbacks    = callbackArr;
+  myConfig.callbacksLen = sizeof(callbackArr) / sizeof(functionPtr);
+  /////////////////////////////////////////////////////////////////
+  
+  myTransfer.begin(Wire, myConfig);
 }
 
-void loop() {
 
-  // Time delay in loop
-  delay(50);
-  Serial.print(".");
+void loop()
+{
+  // Do nothing
 }
-
